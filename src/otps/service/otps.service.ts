@@ -1,14 +1,14 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
-import { OTPs } from "../entity/otp.entity";
+import { OTPS } from "../entity/otp.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 
 @Injectable()
 export class OTPsService {
 
     constructor(
-        @InjectRepository(OTPs)
-        private readonly otpRepository: Repository<OTPs>
+        @InjectRepository(OTPS)
+        private readonly otpRepository: Repository<OTPS>
     ){}
 
     async createAndSendOTP(email: string): Promise<void> {
@@ -28,21 +28,57 @@ export class OTPsService {
 
     // TODO - 1. VERIFY TOKEN METHOD, 2. HAS VERITY TOKEN METHOD
     
-    async verifyOTP(email: string, token: number){
+    async verifyOTP(email: string, token: string, used: boolean): Promise<Boolean> {
+        const userOTP = await this.otpRepository.findOne({
+            where: { usersEmail: email, token: token }
+        })
 
+        if(!userOTP) throw new BadRequestException("Invalid OTP");
+        // otp has not been verified && otp has not been used;
+
+        if(userOTP.used) throw new BadRequestException("OTP has been used");
+        if(userOTP.verified) throw new BadRequestException("OTP has been verified");
+
+
+        const date = new Date()
+        
+        const isNotExpired = userOTP?.expiration.getTime() >  date.getTime();
+
+        if(isNotExpired){
+            userOTP.verified = true;
+            userOTP.verificationDate = new Date();
+            userOTP.used = used;
+            this.otpRepository.save(userOTP);
+        }
+
+        return isNotExpired; 
+    }
+
+    async hasVerifiedOTP(email: string): Promise<Boolean> {
+        const userOTP = await this.otpRepository.findOne({
+            where: { usersEmail: email }
+        })
+
+        const today = new Date();
+        const wasVerifiedToday = userOTP.verificationDate.getDate() == today.getDate() && userOTP.verificationDate.getMonth() == today.getMonth() && userOTP.verificationDate.getFullYear() == today.getFullYear();
+        if(!wasVerifiedToday) throw new BadRequestException("OTP Has Exceed Time. Request A New One");
+
+        if(!userOTP) throw new BadRequestException("Unverifed OTP");
+
+        return userOTP.verified && !userOTP.used;
     }
 
 
-    async getOrInitOTP(email: string){
+    private async getOrInitOTP(email: string){
         const nullableOtp = await this.otpRepository.findOne({
             where: { usersEmail: email }
         })
 
-        if(!nullableOtp) return new OTPs;
+        if(!nullableOtp) return new OTPS;
         return nullableOtp;
     }
 
-    generateToken(){
-        return Math.floor(Math.random() * 900_000 + 100_000);
+    private generateToken(){
+        return `${Math.floor(Math.random() * 900_000 + 100_000)}`;
     }
 }

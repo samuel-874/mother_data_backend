@@ -8,7 +8,8 @@ import { mapToUserDTO } from './users.utilities';
 import { Roles } from '../entity/users.roles';
 import { UsersDTO } from '../dto/users.dto';
 import { OTPsService } from 'src/otps/service/otps.service';
-import { OTPRequest } from 'src/otps/dto/otprequest.dto';
+import { OTPRequest } from 'src/otps/dto/otp-request.dto';
+import { StandardReponse, customResponse } from 'src/utility/standard-response';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +20,7 @@ export class UsersService {
         private otpService: OTPsService
     ){}
 
-    async registerUser(userDTO: RegisterationRequest): Promise<UsersDTO>{
+    async registerUser(userDTO: RegisterationRequest): Promise<StandardReponse>{
         const user = new Users();
         
         const isExistingByEmail: boolean = await this.userRepository.existsBy({ email: userDTO.email });
@@ -41,14 +42,36 @@ export class UsersService {
         const savedUser = await this.userRepository.save(user);
 
         this.otpService.createAndSendOTP(user.email);
+        const dto = mapToUserDTO(savedUser);
         // todo - 1.generate otp, 2.send otp to email 3. set emailVerified to true
-        return mapToUserDTO(savedUser);
+        return customResponse("Registered Successfully",201, dto);
     }
     
 
-    async requestAccountVerificationToken(otpRequest: OTPRequest){
+    async requestAccountVerificationToken(otpRequest: OTPRequest): Promise<StandardReponse>{
+
         await this.otpService.createAndSendOTP(otpRequest.email);
+        return  customResponse("OTP Requested Successfully",200, null) ;
     }
+
+    async validateOTP(otpRequest: OTPRequest){
+
+        const user = await this.userRepository.findOne({
+            where: { email: otpRequest.email }
+        })
+        if(!user) throw new BadRequestException("Unauthorized User");
+        if(!otpRequest.otp) throw new BadRequestException("Inavlid OTP");
+
+        const isValid = await this.otpService.verifyOTP(otpRequest.email,otpRequest.otp, true);
+        if(!isValid) throw new BadRequestException("OTP Has Expired");
+
+        user.emailVerified = true;
+        this.userRepository.save(user);
+
+        return customResponse("OTP Verified Successfully",200,null);
+    }
+
+
 
 
 }

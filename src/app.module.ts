@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from './users/entity/users.entity';
 import { OtpsModule } from './otps/otps.module';
+import { OTPS } from './otps/entity/otp.entity';
 
 
 const dotenv = require("dotenv");
@@ -24,8 +25,9 @@ const sync = process.env.DB_SYNC ;
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [Users],
-      synchronize: sync === "true" ? true : false
+      entities: [],
+      autoLoadEntities: true,
+      synchronize: sync === "true"
     }),
     UsersModule,
     OtpsModule],
