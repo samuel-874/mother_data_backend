@@ -1,5 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { Transform } from "class-transformer";
+import { OtpTypes } from "./opt-types.enum";
 
 @Entity()
 export class OTPS {
@@ -30,5 +31,8 @@ export class OTPS {
     @Column({ type: "timestamp", nullable: true })
     @Transform(({ value }) => new Date(value), { toClassOnly: true })
     verificationDate: Date;
+
+    @Column({ type: "enum", enum: OtpTypes, default: OtpTypes.PASSWORD_RESET })
+    optType: OtpTypes;
     
 }

@@ -6,7 +6,7 @@ export class OTPRequest {
     @IsEmail()
     email: string;
 
-    @IsOptional()
+    // @IsOptional()
     @MinLength(6,{ message: "Validation Failed: Invalid OTP"})
     @MaxLength(6,{ message: "Validation Failed: Invalid OTP"})
     @IsNumberString()

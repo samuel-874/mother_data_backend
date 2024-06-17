@@ -13,6 +13,9 @@ import { StandardReponse, customResponse } from 'src/utility/standard-response';
 import { Request } from 'express';
 import { RegRoute } from '../entity/user.route';
 import { REQUEST, REQUEST_CONTEXT_ID } from '@nestjs/core/router/request/request-constants';
+import { PasswordReset } from '../dto/password-reset.dto';
+import { OtpTypes } from 'src/otps/entity/opt-types.enum';
+import { EmailRequest } from 'src/otps/dto/email-request.dto';
 
 @Injectable({ })
 export class UsersService {
@@ -46,16 +49,22 @@ export class UsersService {
 
         const savedUser = await this.userRepository.save(user);
 
-        this.otpService.createAndSendOTP(user.email);
+        this.otpService.createAndSendOTP(user.email,OtpTypes.EMAIL_VERIFICATION);
         const dto = mapToUserDTO(savedUser);
         // todo - 1.generate otp, 2.send otp to email 3. set emailVerified to true
         return dto;
     }
     
 
-    async requestAccountVerificationToken(otpRequest: OTPRequest): Promise<String>{
+    async requestAccountVerificationToken(otpRequest: EmailRequest): Promise<String>{
 
-        await this.otpService.createAndSendOTP(otpRequest.email);
+        await this.otpService.createAndSendOTP(otpRequest.email,OtpTypes.EMAIL_VERIFICATION);
+        return  "OTP Requested Successfully";
+    }
+
+    async requestPasswordResstToken(otpRequest: EmailRequest): Promise<String>{
+
+        await this.otpService.createAndSendOTP(otpRequest.email,OtpTypes.PASSWORD_RESET);
         return  "OTP Requested Successfully";
     }
 
@@ -111,6 +120,36 @@ export class UsersService {
         return user;
     }
 
+    async validateResetPasswordOTP(otpRequest: OTPRequest){
+        const user = this.userRepository.exists({ where: { email: otpRequest.email }});
+        if(!user) throw new BadRequestException("User not found");
+        if(!otpRequest.otp) throw new BadRequestException("Otp is required");
+
+        const isValid = await this.otpService.verifyOTP(otpRequest.email,otpRequest.otp,false);
+        if(!isValid) throw new BadRequestException("OTP has expired")
+        return "Validated Successfully";
+    }
+
+    async resetPassword(resetRequest: PasswordReset){
+
+        const request_email = resetRequest.email;
+        const new_password = resetRequest.new_password;
+        const isVerified = await this.otpService.hasVerifiedOTP(request_email,resetRequest.otp,OtpTypes.PASSWORD_RESET);
+        if(!isVerified) throw new BadRequestException("OTP hasn't been verified");
+
+        const user = await this.userRepository.findOne({
+            where: { email: request_email }
+        })
+
+        if(!user) throw new BadRequestException("User Not found");
+        const salt = await bcrypt.genSalt();
+        const password = await bcrypt.hash(new_password,salt);
+        user.password = password;
+        this.userRepository.save(user);
+
+        return "Password Reset was successful"
+    }
+
     async changePassword(){
 
     }
@@ -120,5 +159,3 @@ export class UsersService {
     }
 
 }
-
-type UserPayload = { sub: Roles, username: string, reg_route: RegRoute }

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { OTPS } from "../entity/otp.entity";
 import { InjectRepository } from "@nestjs/typeorm";
+import { OtpTypes } from "../entity/opt-types.enum";
 
 @Injectable()
 export class OTPsService {
@@ -11,7 +12,7 @@ export class OTPsService {
         private readonly otpRepository: Repository<OTPS>
     ){}
 
-    async createAndSendOTP(email: string): Promise<void> {
+    async createAndSendOTP(email: string,type: OtpTypes): Promise<void> {
         const userOTP = await this.getOrInitOTP(email);
         const date =  new Date();
         const exp = 30; //30mins
@@ -21,6 +22,7 @@ export class OTPsService {
         userOTP.token = this.generateToken();
         userOTP.verified = false;
         userOTP.used = false;
+        userOTP.optType = type;
 
         console.log(userOTP);
         this.otpRepository.save(userOTP);
@@ -40,6 +42,7 @@ export class OTPsService {
         if(userOTP.verified) throw new BadRequestException("OTP has been verified");
 
 
+
         const date = new Date()
         
         const isNotExpired = userOTP?.expiration.getTime() >  date.getTime();
@@ -48,24 +51,34 @@ export class OTPsService {
             userOTP.verified = true;
             userOTP.verificationDate = new Date();
             userOTP.used = used;
+            // if(used) userOTP.token='000000';
             this.otpRepository.save(userOTP);
         }
 
         return isNotExpired; 
     }
 
-    async hasVerifiedOTP(email: string): Promise<Boolean> {
+    async hasVerifiedOTP(email: string, otp: string, type: OtpTypes): Promise<Boolean> {
         const userOTP = await this.otpRepository.findOne({
             where: { usersEmail: email }
         })
-
+        
         const today = new Date();
+        if(!userOTP) throw new BadRequestException("Invalid OTP");
+        if(userOTP.optType !== type) throw new BadRequestException("Inavlid OTP");
+        if(userOTP.used) throw new BadRequestException("OTP has been used Already");
+        if(userOTP.token !== otp) throw new BadRequestException("Inavlid OTP");
         const wasVerifiedToday = userOTP.verificationDate.getDate() == today.getDate() && userOTP.verificationDate.getMonth() == today.getMonth() && userOTP.verificationDate.getFullYear() == today.getFullYear();
         if(!wasVerifiedToday) throw new BadRequestException("OTP Has Exceed Time. Request A New One");
 
-        if(!userOTP) throw new BadRequestException("Unverifed OTP");
+        if(userOTP.verified && !userOTP.used){
+            userOTP.used = true;
+            // userOTP.token = '000000'
+            await this.otpRepository.save(userOTP);
+            return true;
+        }
 
-        return userOTP.verified && !userOTP.used;
+        return false;
     }
 
 

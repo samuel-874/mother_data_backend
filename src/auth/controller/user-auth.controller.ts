@@ -9,6 +9,8 @@ import { ValidUserPipe } from "../../utility/app-pipes.pipe";
 import { OTPRequest } from "src/otps/dto/otp-request.dto";
 import { StandardReponse } from "src/utility/standard-response";import { AuthGuard } from "../service/auth.guard";
 import { Public } from "../service/public.decorator";
+import { PasswordReset } from "src/users/dto/password-reset.dto";
+import { EmailRequest } from "src/otps/dto/email-request.dto";
 ;
 
 @Public()
@@ -41,7 +43,7 @@ export class UserAuthController {
 
     @Post('/request_acctivation')
     @HttpCode(HttpStatus.OK)
-    async requestAccVerificationOTP(@Body() optRequest: OTPRequest): Promise<String>{
+    async requestAccVerificationOTP(@Body() optRequest: EmailRequest): Promise<String>{
         return await this.userService.requestAccountVerificationToken(optRequest);
     }
 
@@ -49,5 +51,24 @@ export class UserAuthController {
     @HttpCode(HttpStatus.OK)
     async validateOTP(@Body() optRequest: OTPRequest): Promise<String>{
         return await this.userService.validateOTP(optRequest);
+    }
+
+    @Post('/request_password_otp')
+    @HttpCode(HttpStatus.OK)
+    async requestPasswordOTP(@Body() optRequest: EmailRequest): Promise<String>{
+        return await this.userService.requestPasswordResstToken(optRequest);
+    }
+
+
+    @Post('/validate_password_otp')
+    @HttpCode(HttpStatus.OK)
+    async validatePasswordResetOTP(@Body() optRequest: OTPRequest): Promise<String>{
+        return await this.userService.validateResetPasswordOTP(optRequest);
+    }
+
+    @Post('/reset_password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(@Body() passwordReset: PasswordReset): Promise<String>{
+        return await this.userService.resetPassword(passwordReset);
     }
 }
