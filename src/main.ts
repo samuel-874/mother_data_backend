@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { ResponseInterceptor } from './utility/app-interceptors';
 
 const dotenv = require("dotenv");
 dotenv.config();
@@ -12,6 +13,8 @@ async function bootstrap() {
     whitelist: true,
     transform: true
   }))
+
+  app.useGlobalInterceptors(new ResponseInterceptor())
 
   const port = parseInt(process.env.PORT || "4004");
   await app.listen(port);

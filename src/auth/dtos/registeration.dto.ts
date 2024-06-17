@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsMobilePhone, IsNotEmpty, Length, MinLength, min } from "class-validator";
-import { Roles } from "../entity/users.roles";
+import { Roles } from "../../users/entity/users.roles";
 
 
 export class RegisterationRequest {

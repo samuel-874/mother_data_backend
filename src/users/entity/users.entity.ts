@@ -1,5 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { BaseEntity } from "./base.entity";
+import { RegRoute } from "./user.route";
 
 
 @Entity()
@@ -16,7 +17,10 @@ export class Users extends BaseEntity {
     @Column({ default: false })
     emailVerified: boolean;
 
-    @Column({ type: "timestamp", nullable: true })
+    @Column({ nullable: true })
     lastLogin: Date;
+
+    @Column({ type: "enum", enum: RegRoute, default: RegRoute.MOTHER_DATA })
+    regRoute: RegRoute; // google , motherData 
 
 }

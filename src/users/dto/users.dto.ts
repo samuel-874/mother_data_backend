@@ -14,4 +14,6 @@ export class UsersDTO {
     phoneNumber: string;
 
     wallet: WalletsDTO;
+
+    lastLogin: Date;
 }

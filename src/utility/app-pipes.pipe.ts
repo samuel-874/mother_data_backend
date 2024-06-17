@@ -1,6 +1,6 @@
 import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from "@nestjs/common";
-import { RegisterationRequest } from "../dto/registeration.dto";
-import { Roles } from "../entity/users.roles";
+import { RegisterationRequest } from "../auth/dtos/registeration.dto";
+import { Roles } from "../users/entity/users.roles";
 
 
 @Injectable()

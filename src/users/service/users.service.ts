@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Users } from '../entity/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RegisterationRequest } from '../dto/registeration.dto';
+import { RegisterationRequest } from '../../auth/dtos/registeration.dto';
 import * as bcrypt from 'bcrypt';
 import { mapToUserDTO } from './users.utilities';
 import { Roles } from '../entity/users.roles';
@@ -20,7 +20,7 @@ export class UsersService {
         private otpService: OTPsService
     ){}
 
-    async registerUser(userDTO: RegisterationRequest): Promise<StandardReponse>{
+    async registerUser(userDTO: RegisterationRequest): Promise<UsersDTO>{
         const user = new Users();
         
         const isExistingByEmail: boolean = await this.userRepository.existsBy({ email: userDTO.email });
@@ -44,17 +44,17 @@ export class UsersService {
         this.otpService.createAndSendOTP(user.email);
         const dto = mapToUserDTO(savedUser);
         // todo - 1.generate otp, 2.send otp to email 3. set emailVerified to true
-        return customResponse("Registered Successfully",201, dto);
+        return dto;
     }
     
 
-    async requestAccountVerificationToken(otpRequest: OTPRequest): Promise<StandardReponse>{
+    async requestAccountVerificationToken(otpRequest: OTPRequest): Promise<String>{
 
         await this.otpService.createAndSendOTP(otpRequest.email);
-        return  customResponse("OTP Requested Successfully",200, null) ;
+        return  "OTP Requested Successfully";
     }
 
-    async validateOTP(otpRequest: OTPRequest){
+    async validateOTP(otpRequest: OTPRequest): Promise<String>{
 
         const user = await this.userRepository.findOne({
             where: { email: otpRequest.email }
@@ -68,10 +68,22 @@ export class UsersService {
         user.emailVerified = true;
         this.userRepository.save(user);
 
-        return customResponse("OTP Verified Successfully",200,null);
+        return "OTP Verified Successfully";
     }
 
+    async findByEmail(email: string): Promise<Users | undefined> {
+      const user = await this.userRepository.findOne({
+            where: { email }
+        })
+    
+        if(!user) throw new BadRequestException("Email Not Registered");
 
+        return user;
+    }
+
+    async saveUser(user: Users): Promise<Users>{
+        return this.userRepository.save(user);
+    }
 
 
 }

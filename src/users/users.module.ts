@@ -11,6 +11,7 @@ import { OtpsModule } from 'src/otps/otps.module';
     TypeOrmModule.forFeature([Users])
   ],
   providers: [UsersService],
+  exports: [UsersService],
   controllers: [UserController]
 })
 export class UsersModule {}

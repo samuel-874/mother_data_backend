@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from './users/entity/users.entity';
 import { OtpsModule } from './otps/otps.module';
 import { OTPS } from './otps/entity/otp.entity';
+import { AuthModule } from './auth/auth.module';
 
 
 const dotenv = require("dotenv");
@@ -27,11 +26,13 @@ const sync = process.env.DB_SYNC ;
       database: process.env.DB_DATABASE,
       entities: [],
       autoLoadEntities: true,
-      synchronize: sync === "true"
+      synchronize: sync === "true",
+      migrations: ["src/migrations/*.ts"],
     }),
     UsersModule,
-    OtpsModule],
-  controllers: [AppController],
-  providers: [AppService],
+    OtpsModule,
+    AuthModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

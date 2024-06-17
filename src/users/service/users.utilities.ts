@@ -13,6 +13,7 @@ export const mapToUserDTO = (user: Users): UsersDTO => {
     userDTO.profilePic = user.profilePic;
     userDTO.phoneNumber = user.phoneNumber;
     userDTO.wallet = new WalletsDTO();
+    userDTO.lastLogin = user.lastLogin;
 
     return userDTO;
 }
