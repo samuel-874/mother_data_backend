@@ -14,6 +14,8 @@ export const mapToUserDTO = (user: Users): UsersDTO => {
     userDTO.phoneNumber = user.phoneNumber;
     userDTO.wallet = new WalletsDTO();
     userDTO.lastLogin = user.lastLogin;
+    userDTO.emailVerified =  user.emailVerified;
+    userDTO.role = user.role;
 
     return userDTO;
 }

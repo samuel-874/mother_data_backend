@@ -5,6 +5,9 @@ import { Users } from './users/entity/users.entity';
 import { OtpsModule } from './otps/otps.module';
 import { OTPS } from './otps/entity/otp.entity';
 import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './auth/service/auth.guard';
+import { APP_GUARD } from '@nestjs/core';
+import { RoleGuard } from './auth/service/roles.guard';
 
 
 const dotenv = require("dotenv");
@@ -33,6 +36,15 @@ const sync = process.env.DB_SYNC ;
     OtpsModule,
     AuthModule],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard
+    }
+  ],
 })
 export class AppModule {}

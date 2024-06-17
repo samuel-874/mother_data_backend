@@ -6,7 +6,10 @@ import { JwtService } from '@nestjs/jwt';
 import { RegRoute } from 'src/users/entity/user.route';
 import { mapToAuthResponse } from '../dtos/auth.utilities';
 import { AuthResponse } from '../dtos/auth-response.dto';
+import * as dotenv from "dotenv";
+import { Users } from 'src/users/entity/users.entity';
 
+dotenv.config();
 @Injectable()
 export class AuthService {
 
@@ -28,7 +31,37 @@ export class AuthService {
 
         const payload = { sub: user.role, username: user.email, reg_route: user.regRoute };
         const access_token = await this.jwtService.signAsync(payload);
+        const refresh_token =  await this.generateRefreshToken(payload);;
+        return mapToAuthResponse(access_token,refresh_token,user);
+    }
 
-        return mapToAuthResponse(access_token,user);
+    async refreshToken(access_token: string){
+        try {
+            const payload = await this.jwtService.verifyAsync(
+              access_token,
+              { secret: process.env.REFRESH_KEY }
+            );
+            const email = payload.username;
+            const user = await this.userService.findByEmail(email);
+            if(!user)   throw new UnauthorizedException();
+            // console.log(payload);
+            const jwt_payload = { sub: user.role, username: user.email, reg_route: user.regRoute };
+            return {
+                access_token: await this.jwtService.signAsync(jwt_payload)
+            }
+    
+          } catch (e) {
+            console.log(e);
+            throw new UnauthorizedException();
+          }
+    }
+
+    private async generateRefreshToken(payload){        
+        const access_token = await this.jwtService.signAsync(payload,{
+            secret: process.env.REFRESH_KEY,
+            expiresIn: '1d'
+        });
+
+        return access_token;
     }
 }

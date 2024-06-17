@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Users } from '../entity/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,14 +10,19 @@ import { UsersDTO } from '../dto/users.dto';
 import { OTPsService } from 'src/otps/service/otps.service';
 import { OTPRequest } from 'src/otps/dto/otp-request.dto';
 import { StandardReponse, customResponse } from 'src/utility/standard-response';
+import { Request } from 'express';
+import { RegRoute } from '../entity/user.route';
+import { REQUEST, REQUEST_CONTEXT_ID } from '@nestjs/core/router/request/request-constants';
 
-@Injectable()
+@Injectable({ })
 export class UsersService {
 
     constructor(
         @InjectRepository(Users)
         private userRepository: Repository<Users>,
-        private otpService: OTPsService
+        private otpService: OTPsService,
+        @Inject(REQUEST) 
+        private readonly request: Request
     ){}
 
     async registerUser(userDTO: RegisterationRequest): Promise<UsersDTO>{
@@ -81,9 +86,39 @@ export class UsersService {
         return user;
     }
 
+    async isExistingByEmail(email: string){
+        return await this.userRepository.exists({ where: { email} })
+    }
+
     async saveUser(user: Users): Promise<Users>{
         return this.userRepository.save(user);
     }
 
+    async getProfile(): Promise<UsersDTO> {
+        const user = await this.getAuthenticatedUser();
+        return mapToUserDTO(user);
+    }
+
+    async getAuthenticatedUser(): Promise<Users> {
+        const userPayload: any = this.request["user"];
+        if(!userPayload) throw new UnauthorizedException("No User Payload");
+        const username = userPayload?.username;
+        if(!userPayload) throw new UnauthorizedException("No Username On Payload");
+        const user = await this.userRepository.findOne({
+            where: { email: username }
+        })
+        if(!user) throw new UnauthorizedException("User Not Found");
+        return user;
+    }
+
+    async changePassword(){
+
+    }
+
+    async updateProfile(){
+        
+    }
 
 }
+
+type UserPayload = { sub: Roles, username: string, reg_route: RegRoute }

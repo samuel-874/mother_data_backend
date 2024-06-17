@@ -2,13 +2,16 @@ import { AuthService } from "./../service/auth.service";
 import { AuthRequest } from "../dtos/auth-request.dto";
 import { UsersService } from "src/users/service/users.service"
 
-import { Controller, Post, Body, Query, HttpStatus, HttpCode, Req, Res } from "@nestjs/common";
+import { Controller, Post, Body, Query, HttpStatus, HttpCode, Req, Res, UseGuards, Param } from "@nestjs/common";
 import { UsersDTO } from "../../users/dto/users.dto";
 import { RegisterationRequest } from "../dtos/registeration.dto";
 import { ValidUserPipe } from "../../utility/app-pipes.pipe";
 import { OTPRequest } from "src/otps/dto/otp-request.dto";
-import { StandardReponse } from "src/utility/standard-response";;
+import { StandardReponse } from "src/utility/standard-response";import { AuthGuard } from "../service/auth.guard";
+import { Public } from "../service/public.decorator";
+;
 
+@Public()
 @Controller("api/v1/auth/user")
 export class UserAuthController {
 
@@ -22,6 +25,12 @@ export class UserAuthController {
     @HttpCode(HttpStatus.OK)
     authenticate(@Body() request: AuthRequest){
         return this.authService.signInUser(request);
+    }
+
+    @Post("/refresh")
+    @HttpCode(HttpStatus.OK)
+    refresh(@Query('token') token: string){        
+        return this.authService.refreshToken(token);
     }
 
     

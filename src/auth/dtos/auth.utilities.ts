@@ -3,9 +3,10 @@ import { AuthResponse } from "./auth-response.dto";
 import { mapToUserDTO } from "src/users/service/users.utilities";
 
 
-export function mapToAuthResponse(access_token: string, user: Users ){
+export function mapToAuthResponse(access_token: string,refresh_token: string, user: Users ){
     const dto = new AuthResponse();
     dto.access_token = access_token;
+    dto.refresh_token = refresh_token;
     dto.user = mapToUserDTO(user);
 
     return dto;

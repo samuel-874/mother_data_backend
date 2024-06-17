@@ -1,3 +1,4 @@
+import { Roles } from "../entity/users.roles";
 import { WalletsDTO } from "./wallets.dto";
 
 
@@ -16,4 +17,10 @@ export class UsersDTO {
     wallet: WalletsDTO;
 
     lastLogin: Date;
+
+    emailVerified: boolean;
+
+    profileCompleted: boolean;
+
+    role: Roles;
 }
